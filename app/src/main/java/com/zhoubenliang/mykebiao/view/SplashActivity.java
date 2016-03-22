@@ -15,10 +15,8 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import cn.bmob.v3.listener.SaveListener;
 import rx.Observable;
-import rx.Scheduler;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.internal.schedulers.ScheduledAction;
 import rx.schedulers.Schedulers;
 
 public class SplashActivity extends AppCompatActivity implements Animation.AnimationListener {
@@ -60,6 +58,8 @@ public class SplashActivity extends AppCompatActivity implements Animation.Anima
             //说明第一次登陆,进入欢迎页面
             startActivity(new Intent(this, WelcomeActivity.class));
             finish();
+            System.out.println("测试commit");
+            System.out.println("测试commit22");
         } else {
             //校验登陆状态,检查账号密码是否匹配
             String username = SharedPreferencesUtils.getString("username", this);
