@@ -33,6 +33,7 @@ public class SplashActivity extends AppCompatActivity implements Animation.Anima
         System.out.println("--->" + rl_splash.toString());
         //开启动画
         startAnimotion();
+        System.out.println("test Git");
     }
 
     private void startAnimotion() {
