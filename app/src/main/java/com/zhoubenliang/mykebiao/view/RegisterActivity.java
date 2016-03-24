@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
@@ -14,6 +15,7 @@ import com.jakewharton.rxbinding.view.RxView;
 import com.zhoubenliang.mykebiao.R;
 import com.zhoubenliang.mykebiao.contonle.CommonUtils;
 
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,6 +23,8 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import cn.bmob.v3.Bmob;
 import rx.functions.Action1;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -64,7 +68,7 @@ public class RegisterActivity extends AppCompatActivity {
         RxView.clicks(btnRegister).subscribe(new Action1<Void>() {
             @Override
             public void call(Void aVoid) {
-
+                Log.d("RegisterActivity", Thread.currentThread().getName());
             }
         });
         RxView.clicks(photobtn).subscribe(new Action1<Void>() {
@@ -73,6 +77,32 @@ public class RegisterActivity extends AppCompatActivity {
                 btnPhotoClick();
             }
         });
+        RxView.clicks(btRegisterJiance)
+                .throttleFirst(500, TimeUnit.MILLISECONDS)
+                .observeOn(Schedulers.newThread())
+                .subscribe(new Action1<Void>() {
+                    @Override
+                    public void call(Void aVoid) {
+                        String userString = username.getText().toString().trim();
+                        if (!TextUtils.isEmpty(userString)) {
+                            checkUser(userString);
+                        } else {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Log.d("RegisterActivity", "text");
+                                    Toast.makeText(RegisterActivity.this, "用户名为空", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+
+                    }
+                });
+
+
+    }
+
+    private void checkUser(String userString) {
 
     }
 
@@ -97,7 +127,8 @@ public class RegisterActivity extends AppCompatActivity {
 
     /**
      * 判断用户名是否合法
-     * @param name   name用户名
+     *
+     * @param name name用户名
      * @return
      */
     private boolean isUsername(String name) {
