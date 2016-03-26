@@ -25,6 +25,7 @@ import com.jakewharton.rxbinding.support.v7.widget.RxToolbar;
 import com.jakewharton.rxbinding.view.RxView;
 import com.zhoubenliang.mykebiao.R;
 import com.zhoubenliang.mykebiao.contonle.CommonUtils;
+import com.zhoubenliang.mykebiao.mode.MyUser;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -45,6 +46,7 @@ import cn.bmob.v3.Bmob;
 import cn.bmob.v3.BmobQuery;
 import cn.bmob.v3.BmobUser;
 import cn.bmob.v3.listener.FindListener;
+import cn.bmob.v3.listener.SaveListener;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
@@ -116,8 +118,6 @@ public class RegisterActivity extends AppCompatActivity {
         RxView.clicks(btnImg).subscribe(new Action1<Void>() {
             @Override
             public void call(Void aVoid) {
-                Log.d("RegisterActivity", "0000000");
-
                 Intent it = new Intent(
                         Intent.ACTION_PICK,
                         MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -125,12 +125,62 @@ public class RegisterActivity extends AppCompatActivity {
                 startActivityForResult(it, 2);
             }
         });
-        RxView.clicks(btnRegister).subscribe(new Action1<Void>() {
-            @Override
-            public void call(Void aVoid) {
-                Log.d("RegisterActivity", Thread.currentThread().getName());
-            }
-        });
+        RxView.clicks(btnRegister)
+                .throttleFirst(500, TimeUnit.MILLISECONDS)
+                .subscribe(new Action1<Void>() {
+                    @Override
+                    public void call(Void aVoid) {
+                        Log.d("RegisterActivity", Thread.currentThread().getName());
+                        String userString = username.getText().toString().trim();
+                        String pwdString = username.getText().toString().trim();
+                        if (!TextUtils.isEmpty(userString)) {
+                            if (isUsername(userString)) {
+                                if (!TextUtils.isEmpty(pwdString)) {
+                                    if (isPwd(pwdString)) {
+                                        if (isFaceAvaiable) {
+                                            toRegister(userString, pwdString)
+                                                    .subscribeOn(Schedulers.newThread())
+                                                    .observeOn(AndroidSchedulers.mainThread())
+                                                    .subscribe(new Subscriber<Boolean>() {
+                                                        @Override
+                                                        public void onCompleted() {
+                                                            //清空
+                                                        }
+
+                                                        @Override
+                                                        public void onError(Throwable e) {
+
+                                                        }
+
+                                                        @Override
+                                                        public void onNext(Boolean aBoolean) {
+                                                            if (aBoolean) {
+                                                                Toast.makeText(RegisterActivity.this, "注册成功", Toast.LENGTH_SHORT).show();
+                                                                //跳转登陆界面
+                                                            } else {
+                                                                Toast.makeText(RegisterActivity.this, "注册失败", Toast.LENGTH_SHORT).show();
+                                                            }
+                                                        }
+                                                    });
+                                        } else {
+                                            Toast.makeText(RegisterActivity.this, "没有人脸", Toast.LENGTH_SHORT).show();
+                                        }
+                                    } else {
+                                        Toast.makeText(RegisterActivity.this, "密码必须是6-16位字母数字", Toast.LENGTH_SHORT).show();
+                                    }
+                                } else {
+                                    Toast.makeText(RegisterActivity.this, "密码不能空", Toast.LENGTH_SHORT).show();
+                                }
+
+                            } else {
+                                Toast.makeText(RegisterActivity.this, "用户名必须5-16位字母开头", Toast.LENGTH_SHORT).show();
+                            }
+
+                        } else {
+                            Toast.makeText(RegisterActivity.this, "用户名为空", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
         RxView.clicks(photobtn).subscribe(new Action1<Void>() {
             @Override
             public void call(Void aVoid) {
@@ -161,6 +211,54 @@ public class RegisterActivity extends AppCompatActivity {
 
     }
 
+    @NonNull
+    private Observable<Boolean> toRegister(final String userString, final String pwdString) {
+        return Observable.create(new Observable.OnSubscribe<Boolean>() {
+            @Override
+            public void call(final Subscriber<? super Boolean> subscriber) {
+                Log.d("Thread", Thread.currentThread().getName());
+                MyUser user = new MyUser();
+                user.setUsername(userString);
+                user.setPassword(pwdString);
+                user.setFace_id(face_id);
+                Log.d("RegisterActivity", "------------>" + face_id);
+                user.signUp(RegisterActivity.this, new SaveListener() {
+                    @Override
+                    public void onSuccess() {
+                        subscriber.onNext(true);
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                //还要把faceid加入集合
+                                Log.d("Thread", Thread.currentThread().getName());
+                                HttpRequests requests = new HttpRequests(CommonUtils.FACE_API_KEY, CommonUtils.FACE_API_SECRET);
+                                try {
+                                    PostParameters pp = new PostParameters();
+                                    pp.setFacesetName(CommonUtils.FACE_SET_NAME);
+                                    pp.setFaceId(face_id);
+                                    JSONObject jsonObject = requests.facesetAddFace(pp);
+                                    Log.d("RegisterActivity", "--->" + jsonObject.toString());
+                                } catch (FaceppParseException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }).start();
+                        subscriber.onCompleted();
+                    }
+
+                    @Override
+                    public void onFailure(int i, String s) {
+                        Log.d("RegisterActivity", "错误日志" + s);
+                        subscriber.onNext(false);
+                        subscriber.onCompleted();
+                    }
+                });
+            }
+        });
+    }
+
+    ;
+
     /**
      * \
      * 检测用户名是否可用
@@ -168,6 +266,15 @@ public class RegisterActivity extends AppCompatActivity {
      * @param userString
      */
     private void checkUser(final String userString) {
+        if (!isUsername(userString)) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(RegisterActivity.this, "用户名必须是5-16位字母开头", Toast.LENGTH_SHORT).show();
+                }
+            });
+            return;
+        }
         BmobQuery<BmobUser> query = new BmobQuery<BmobUser>();
         query.addWhereEqualTo("username", userString);
         query.findObjects(this, new FindListener<BmobUser>() {
@@ -261,7 +368,7 @@ public class RegisterActivity extends AppCompatActivity {
         dialog.show();
         getData().subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<Integer>() {
+                .subscribe(new Subscriber<Object>() {
                     @Override
                     public void onCompleted() {
                         dialog.dismiss();
@@ -275,8 +382,9 @@ public class RegisterActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onNext(Integer integer) {
-                        int result = integer;
+                    public void onNext(Object integer) {
+                        Bundle bundle = (Bundle) integer;
+                        int result = bundle.getInt("num");
                         switch (result) {
                             case 1:
                                 //重复人脸
@@ -285,6 +393,9 @@ public class RegisterActivity extends AppCompatActivity {
                                 break;
                             case 2:
                                 //有人脸,并且不重复
+                                String faceid = bundle.getString("faceid");
+                                face_id = faceid;
+                                Log.d("RegisterActivity", "---A---->" + face_id);
                                 Toast.makeText(RegisterActivity.this, "人脸可用", Toast.LENGTH_SHORT).show();
                                 isFaceAvaiable = true;
                                 break;
@@ -299,10 +410,10 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     @NonNull
-    private Observable<Integer> getData() {
-        return Observable.create(new Observable.OnSubscribe<Integer>() {
+    private Observable<Object> getData() {
+        return Observable.create(new Observable.OnSubscribe<Object>() {
             @Override
-            public void call(Subscriber<? super Integer> subscriber) {
+            public void call(Subscriber<? super Object> subscriber) {
                 HttpRequests httpRequests = new HttpRequests(CommonUtils.FACE_API_KEY, CommonUtils.FACE_API_SECRET);
                 try {
                     JSONObject result = httpRequests.detectionDetect(new PostParameters()
@@ -323,7 +434,10 @@ public class RegisterActivity extends AppCompatActivity {
                         JSONObject jsObject;
                         JSONArray candidate = js.getJSONArray("candidate");
                         if (candidate.length() < 1) {
-                            subscriber.onNext(FACE_NO);
+                            Bundle bundle = new Bundle();
+                            bundle.putInt("num", FACE_NO);
+                            bundle.putString("faceid", faceid);
+                            subscriber.onNext(bundle);
                             subscriber.onCompleted();
                             return;
                         }
@@ -333,13 +447,18 @@ public class RegisterActivity extends AppCompatActivity {
                             if (jsObject.getDouble("similarity") > 80.00) {
                                 //说明已经存在该人脸
                                 Log.i(TAG, "相似度为" + jsObject.getDouble("similarity"));
-                                subscriber.onNext(FACE_EXIST);
+                                Bundle bundle = new Bundle();
+                                bundle.putInt("num", FACE_EXIST);
+                                subscriber.onNext(bundle);
                                 subscriber.onCompleted();
                                 break;
                             } else {
-                                face_id = faceid;
+                                Bundle bundle = new Bundle();
+                                bundle.putInt("num", FACE_NO);
+                                bundle.putString("faceid", faceid);
+
                                 //没有重复人脸
-                                subscriber.onNext(FACE_NO);
+                                subscriber.onNext(bundle);
                                 subscriber.onCompleted();
                                 break;
                             }
@@ -347,7 +466,9 @@ public class RegisterActivity extends AppCompatActivity {
                         }
                     } else {
                         //没有检测到人脸
-                        subscriber.onNext(FACE_ERROR);
+                        Bundle bundle = new Bundle();
+                        bundle.putInt("num", FACE_ERROR);
+                        subscriber.onNext(bundle);
                         subscriber.onCompleted();
                     }
                 } catch (FaceppParseException e) {
