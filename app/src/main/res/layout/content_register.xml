@@ -105,6 +105,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:inputType="none"
+            android:enabled="false"
             android:background="@android:drawable/edit_text"
             android:singleLine="true">
         </EditText>

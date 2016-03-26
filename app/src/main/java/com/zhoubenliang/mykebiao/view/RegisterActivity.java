@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
@@ -87,35 +88,43 @@ public class RegisterActivity extends AppCompatActivity {
         Bmob.initialize(this, CommonUtils.BMOB_APPID);
         setContentView(R.layout.activity_register);
         ButterKnife.bind(this);
+
         initToolbar();
+//        intiFaceset();
         initBtn();
 
     }
 
-    private void initBtn() {
-        btnImg.setOnClickListener(new View.OnClickListener() {
+    private void intiFaceset() {
+        new Thread() {
             @Override
-            public void onClick(View v) {
+            public void run() {
+                HttpRequests requests = new HttpRequests(CommonUtils.FACE_API_KEY, CommonUtils.FACE_API_SECRET);
+                try {
+                    PostParameters params = new PostParameters();
+                    params.setFacesetName(CommonUtils.FACE_SET_NAME);
+                    JSONObject object = requests.facesetCreate(params);
+                    Log.d("RegisterActivity", "object:" + object);
+                } catch (FaceppParseException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+    }
+
+    private void initBtn() {
+        RxView.clicks(btnImg).subscribe(new Action1<Void>() {
+            @Override
+            public void call(Void aVoid) {
                 Log.d("RegisterActivity", "0000000");
-                 Intent it = new Intent(
+
+                Intent it = new Intent(
                         Intent.ACTION_PICK,
                         MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                 it.setType("image/*");
                 startActivityForResult(it, 2);
             }
         });
-        /*RxView.clicks(btnImg).subscribe(new Action1<Void>() {
-            @Override
-            public void call(Void aVoid) {
-                Log.d("RegisterActivity", "0000000");
-
-               *//* Intent it = new Intent(
-                        Intent.ACTION_PICK,
-                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                it.setType("image*//**//*");
-                startActivityForResult(it, 2);*//*
-            }
-        });*/
         RxView.clicks(btnRegister).subscribe(new Action1<Void>() {
             @Override
             public void call(Void aVoid) {
@@ -232,9 +241,9 @@ public class RegisterActivity extends AppCompatActivity {
         if (requestCode == 1 && requestCode == RESULT_OK) {
             Log.i(TAG, "照相成功！");
             todoPic();
-        }else if (requestCode == 2 && resultCode == RESULT_OK){
+        } else if (requestCode == 2 && resultCode == RESULT_OK) {
             Uri selectedImage = data.getData();
-            String[] filePathColumns = { MediaStore.Images.Media.DATA };
+            String[] filePathColumns = {MediaStore.Images.Media.DATA};
             Cursor c = this.getContentResolver().query(selectedImage,
                     filePathColumns, null, null, null);
             c.moveToFirst();
@@ -260,6 +269,7 @@ public class RegisterActivity extends AppCompatActivity {
 
                     @Override
                     public void onError(Throwable e) {
+                        Log.d("RegisterActivity", "e:" + e);
                         Toast.makeText(RegisterActivity.this, "网络错误", Toast.LENGTH_SHORT).show();
                         dialog.dismiss();
                     }
@@ -288,6 +298,7 @@ public class RegisterActivity extends AppCompatActivity {
                 });
     }
 
+    @NonNull
     private Observable<Integer> getData() {
         return Observable.create(new Observable.OnSubscribe<Integer>() {
             @Override
@@ -299,10 +310,15 @@ public class RegisterActivity extends AppCompatActivity {
                     JSONArray ffid = result.getJSONArray("face");
                     if (ffid.length() > 0) {
                         //1.如果人脸存在,在从FACE)SET里检测是否已经存在该人脸
+                        String faceid = result.getJSONArray("face").getJSONObject(0).getString("face_id");
+                        Log.d("RegisterActivity", "--->" + faceid);
+                        //在search之前需要训练
+                        httpRequests.trainSearch(new PostParameters().setFacesetName(CommonUtils.FACE_SET_NAME));
+                        PostParameters parameters = new PostParameters();
+                        parameters.setFacesetName(CommonUtils.FACE_SET_NAME);
+                        parameters.setKeyFaceId(faceid);
                         JSONObject js = httpRequests
-                                .recognitionSearch(new PostParameters()
-                                        .setFacesetName(CommonUtils.FACE_SET_NAME)
-                                        .setKeyFaceId(result.getJSONArray("face").getJSONObject(0).getString("face_id")));
+                                .recognitionSearch(parameters);
                         Log.d("RegisterActivity", js.toString());
                         JSONObject jsObject;
                         JSONArray candidate = js.getJSONArray("candidate");
@@ -321,8 +337,7 @@ public class RegisterActivity extends AppCompatActivity {
                                 subscriber.onCompleted();
                                 break;
                             } else {
-                                face_id = result.getJSONArray("face").getJSONObject(0)
-                                        .getString("face_id");
+                                face_id = faceid;
                                 //没有重复人脸
                                 subscriber.onNext(FACE_NO);
                                 subscriber.onCompleted();
