@@ -55,7 +55,7 @@ public class SplashActivity extends AppCompatActivity implements Animation.Anima
     public void onAnimationEnd(Animation animation) {
         //判断是否第一次登陆/
         String isFirst = SharedPreferencesUtils.getString("isFirst", this);
-        if (isFirst == null) {
+        if (isFirst == null || isFirst.equals("")) {
             //说明第一次登陆,进入欢迎页面
             startActivity(new Intent(this, WelcomeActivity.class));
             finish();
