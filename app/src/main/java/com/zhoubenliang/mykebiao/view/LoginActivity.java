@@ -19,11 +19,16 @@ import com.zhoubenliang.mykebiao.contonle.CommonUtils;
 import com.zhoubenliang.mykebiao.contonle.SharedPreferencesUtils;
 import com.zhoubenliang.mykebiao.mode.MyUser;
 
+import java.util.List;
+
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import cn.bmob.v3.BmobQuery;
 import cn.bmob.v3.BmobUser;
 import cn.bmob.v3.exception.BmobException;
+import cn.bmob.v3.listener.CountListener;
+import cn.bmob.v3.listener.FindListener;
 import cn.bmob.v3.listener.LogInListener;
 import cn.bmob.v3.listener.SaveListener;
 import rx.Observable;
@@ -86,18 +91,18 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(this, "用户名密码不能空", Toast.LENGTH_SHORT).show();
             return;
         } else {
-            MyUser myUser = new MyUser();
-            myUser.setUsername(userNameString);
-            myUser.setPassword(userPwdString);
-            myUser.login(LoginActivity.this, new SaveListener() {
+            BmobQuery<MyUser> query = new BmobQuery<MyUser>();
+            query.addWhereEqualTo("username", userNameString);
+            query.addWhereEqualTo("password", userPwdString);
+            query.findObjects(this, new FindListener<MyUser>() {
                 @Override
-                public void onSuccess() {
-                    Toast.makeText(LoginActivity.this, "成功", Toast.LENGTH_SHORT).show();
+                public void onSuccess(List<MyUser> list) {
+                    Toast.makeText(LoginActivity.this, "成功"+list.size(), Toast.LENGTH_SHORT).show();
                 }
 
                 @Override
-                public void onFailure(int i, String s) {
-                    Toast.makeText(LoginActivity.this, "失败"+s, Toast.LENGTH_SHORT).show();
+                public void onError(int i, String s) {
+                    Toast.makeText(LoginActivity.this, "失败", Toast.LENGTH_SHORT).show();
                 }
             });
             /*Observable.create(new Observable.OnSubscribe<Object>() {
