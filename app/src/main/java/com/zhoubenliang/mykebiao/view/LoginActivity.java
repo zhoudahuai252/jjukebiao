@@ -61,6 +61,7 @@ public class LoginActivity extends AppCompatActivity {
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btn_login:
+
                 loginUserpwd();
                 break;
             case R.id.btn_face_login:
@@ -85,27 +86,41 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(this, "用户名密码不能空", Toast.LENGTH_SHORT).show();
             return;
         } else {
-            Observable.create(new Observable.OnSubscribe<Object>() {
+            MyUser myUser = new MyUser();
+            myUser.setUsername(userNameString);
+            myUser.setPassword(userPwdString);
+            myUser.login(LoginActivity.this, new SaveListener() {
+                @Override
+                public void onSuccess() {
+                    Toast.makeText(LoginActivity.this, "成功", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onFailure(int i, String s) {
+                    Toast.makeText(LoginActivity.this, "失败"+s, Toast.LENGTH_SHORT).show();
+                }
+            });
+            /*Observable.create(new Observable.OnSubscribe<Object>() {
                 @Override
                 public void call(final Subscriber<? super Object> subscriber) {
-
-                    BmobUser.loginByAccount(LoginActivity.this, userNameString, userPwdString, new LogInListener<MyUser>() {
+                    MyUser myUser = new MyUser();
+                    myUser.setUsername(userNameString);
+                    myUser.setPassword(userPwdString);
+                    myUser.login(LoginActivity.this, new SaveListener() {
+                        @Override
+                        public void onSuccess() {
+                            subscriber.onNext("登陆成功");
+                            subscriber.onCompleted();
+                        }
 
                         @Override
-                        public void done(MyUser user, BmobException e) {
-                            Log.d("LoginActivity", userNameString);
-                            Log.d("LoginActivity", userPwdString);
-                            Log.d("LoginActivity", "user:" + user);
-                            if (user != null) {
-                                Log.i("smile", "用户登陆成功");
-                                subscriber.onNext("登陆成功");
-                                subscriber.onCompleted();
-                            } else {
-                                subscriber.onError(e);
-                            }
+                        public void onFailure(int i, String s) {
+                            subscriber.onError(new Throwable(s));
                         }
                     });
+
                 }
+
             }).subscribeOn(Schedulers.newThread())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Subscriber<Object>() {
@@ -132,7 +147,7 @@ public class LoginActivity extends AppCompatActivity {
                         public void onNext(Object o) {
 
                         }
-                    });
+                    });*/
         }
     }
 }
