@@ -1,5 +1,6 @@
 package com.zhoubenliang.mykebiao.view;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -91,68 +92,45 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(this, "用户名密码不能空", Toast.LENGTH_SHORT).show();
             return;
         } else {
+            final ProgressDialog dialog = CommonUtils.getProcessDialog(this, "正在登陆");
+            dialog.show();
             BmobQuery<MyUser> query = new BmobQuery<MyUser>();
             query.addWhereEqualTo("username", userNameString);
             query.addWhereEqualTo("password", userPwdString);
-            query.findObjects(this, new FindListener<MyUser>() {
+            query.count(this, MyUser.class, new CountListener() {
                 @Override
-                public void onSuccess(List<MyUser> list) {
-                    Toast.makeText(LoginActivity.this, "成功"+list.size(), Toast.LENGTH_SHORT).show();
-                }
-
-                @Override
-                public void onError(int i, String s) {
-                    Toast.makeText(LoginActivity.this, "失败", Toast.LENGTH_SHORT).show();
-                }
-            });
-            /*Observable.create(new Observable.OnSubscribe<Object>() {
-                @Override
-                public void call(final Subscriber<? super Object> subscriber) {
-                    MyUser myUser = new MyUser();
-                    myUser.setUsername(userNameString);
-                    myUser.setPassword(userPwdString);
-                    myUser.login(LoginActivity.this, new SaveListener() {
+                public void onSuccess(int i) {
+                    Log.d("LoginActivity", "onSuccess--" + i);
+                    BmobQuery<MyUser> query2 = new BmobQuery<MyUser>();
+                    query2.addWhereEqualTo("username", userNameString);
+                    query2.findObjects(LoginActivity.this, new FindListener<MyUser>() {
                         @Override
-                        public void onSuccess() {
-                            subscriber.onNext("登陆成功");
-                            subscriber.onCompleted();
+                        public void onSuccess(List<MyUser> list) {
+                            int size = list.size();
+                            String face_id = list.get(0).getFace_id();
+                            if (size > 0) {
+                                //登陆成功
+                                startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                                dialog.dismiss();
+                            } else {
+                                //登陆失败
+                                dialog.dismiss();
+                                Toast.makeText(LoginActivity.this, "用户名或者密码错误", Toast.LENGTH_SHORT).show();
+                            }
                         }
 
                         @Override
-                        public void onFailure(int i, String s) {
-                            subscriber.onError(new Throwable(s));
+                        public void onError(int i, String s) {
+                            Toast.makeText(LoginActivity.this, "网络错误", Toast.LENGTH_SHORT).show();
                         }
                     });
-
                 }
 
-            }).subscribeOn(Schedulers.newThread())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new Subscriber<Object>() {
-                        @Override
-                        public void onCompleted() {
-                            //完成说明成功登陆
-                            //保存一下用户名密码
-                            SharedPreferencesUtils.putString(LoginActivity.this, "username", userNameString);
-                            SharedPreferencesUtils.putString(LoginActivity.this, "userpwd", userPwdString);
-                            SharedPreferencesUtils.putString(LoginActivity.this, "isFirst", "noFirst");
-                            //跳转到主界面
-                            startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                            finish();
-                        }
-
-                        @Override
-                        public void onError(Throwable e) {
-                            //说明登陆失败
-                            Log.d("LoginActivity", "e:" + e);
-                            Toast.makeText(LoginActivity.this, "登陆失败", Toast.LENGTH_SHORT).show();
-                        }
-
-                        @Override
-                        public void onNext(Object o) {
-
-                        }
-                    });*/
+                @Override
+                public void onFailure(int i, String s) {
+                    Toast.makeText(LoginActivity.this, "网络错误", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
     }
 }
