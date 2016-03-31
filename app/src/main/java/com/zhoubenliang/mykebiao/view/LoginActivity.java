@@ -73,6 +73,7 @@ public class LoginActivity extends AppCompatActivity {
             case R.id.btn_face_login:
                 break;
             case R.id.tv_zhaohui:
+                startActivity(new Intent(this, MiMaZhaoHuiActivity.class));
                 break;
             case R.id.tv_register:
                 //跳转注册界面
@@ -114,6 +115,7 @@ public class LoginActivity extends AppCompatActivity {
                                 SharedPreferencesUtils.putString(LoginActivity.this, "username", userNameString);
                                 SharedPreferencesUtils.putString(LoginActivity.this, "userpwd", userPwdString);
                                 dialog.dismiss();
+                                finish();
                             } else {
                                 //登陆失败
                                 dialog.dismiss();
