@@ -3,6 +3,7 @@ package com.zhoubenliang.mykebiao.view;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.widget.RelativeLayout;
@@ -61,11 +62,20 @@ public class SplashActivity extends AppCompatActivity implements Animation.Anima
             finish();
 
         } else {
-            //校验登陆状态,检查账号密码是否匹配
+           /* //校验登陆状态,检查账号密码是否匹配
             String username = SharedPreferencesUtils.getString("username", this);
             String userpwd = SharedPreferencesUtils.getString("userpwd", this);
             checkLogin(username, userpwd);
-            System.out.println("test  GitHub ");
+            System.out.println("test  GitHub ")*/
+            ;
+            //直接跳主界面
+            String username = SharedPreferencesUtils.getString("username", this);
+            if (TextUtils.isEmpty(username)) {
+                //跳登陆界面
+                startActivity(new Intent(this, LoginActivity.class));
+            } else
+                startActivity(new Intent(this, MainActivity.class));
+            finish();
         }
     }
 

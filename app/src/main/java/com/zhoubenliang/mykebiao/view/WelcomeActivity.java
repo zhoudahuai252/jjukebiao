@@ -1,5 +1,6 @@
 package com.zhoubenliang.mykebiao.view;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -10,13 +11,14 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import com.zhoubenliang.mykebiao.R;
+import com.zhoubenliang.mykebiao.contonle.SharedPreferencesUtils;
 
 import java.util.ArrayList;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
-public class WelcomeActivity extends AppCompatActivity {
+public class WelcomeActivity extends AppCompatActivity implements ViewPager.OnPageChangeListener {
 
     @Bind(R.id.viewpage)
     ViewPager viewpage;
@@ -60,6 +62,34 @@ public class WelcomeActivity extends AppCompatActivity {
 
         PagerAdapter adapter = new MyWelPageAdapter();
         viewpage.setAdapter(adapter);
+        viewpage.addOnPageChangeListener(this);
+    }
+
+    @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+    }
+
+    @Override
+    public void onPageSelected(int position) {
+        for (int i = 0; i < imageViews.size(); i++) {
+            ImageView childView = (ImageView) llRoot.getChildAt(i);
+            if (i == position) {
+                childView.setImageResource(R.mipmap.page_now);
+            } else
+                childView.setImageResource(R.mipmap.page);
+        }
+    }
+
+    @Override
+    public void onPageScrollStateChanged(int state) {
+        int currentItem = viewpage.getCurrentItem();
+        if (currentItem == imageViews.size() - 1 && state == 0) {
+            //跳转登陆界面
+            startActivity(new Intent(this, LoginActivity.class));
+            SharedPreferencesUtils.putString(this, "isFirst", "noFirst");
+            finish();
+        }
     }
 
     private class MyWelPageAdapter extends PagerAdapter {

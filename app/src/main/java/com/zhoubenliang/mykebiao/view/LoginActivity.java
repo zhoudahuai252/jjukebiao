@@ -111,6 +111,8 @@ public class LoginActivity extends AppCompatActivity {
                             if (size > 0) {
                                 //登陆成功
                                 startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                                SharedPreferencesUtils.putString(LoginActivity.this, "username", userNameString);
+                                SharedPreferencesUtils.putString(LoginActivity.this, "userpwd", userPwdString);
                                 dialog.dismiss();
                             } else {
                                 //登陆失败
