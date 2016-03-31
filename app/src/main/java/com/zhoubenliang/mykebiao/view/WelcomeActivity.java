@@ -42,8 +42,18 @@ public class WelcomeActivity extends AppCompatActivity {
             imageView.setScaleType(ImageView.ScaleType.FIT_XY);
 //            imageView.setAdjustViewBounds(true);
             imageViews.add(imageView);
+            ImageView dotview = new ImageView(this);
+            dotview.setScaleType(ImageView.ScaleType.FIT_XY);
+            LinearLayout.LayoutParams prams = new LinearLayout.LayoutParams(50, 50);
+            dotview.setLayoutParams(prams);
+            dotview.setImageResource(R.mipmap.page);
+            llRoot.addView(dotview);
             imageView.setImageResource(id);
+
         }
+        //设置默认第一
+        ImageView childView = (ImageView) llRoot.getChildAt(0);
+        childView.setImageResource(R.mipmap.page_now);
     }
 
     private void initViewPager() {
