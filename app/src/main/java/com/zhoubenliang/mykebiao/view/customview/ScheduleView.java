@@ -15,6 +15,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 
+import com.zhoubenliang.mykebiao.R;
 import com.zhoubenliang.mykebiao.mode.Course;
 
 import java.util.List;
@@ -43,12 +44,14 @@ public class ScheduleView extends View implements OnTouchListener {
 
     // 颜色
     public static final int contentBg = Color.argb(255, 255, 255, 255);
-    public static final int barBg = Color.argb(255, 225, 225, 225);
+    public static final int barBg = Color.parseColor("#F4A460");
+    public static final int barcBg = Color.parseColor("#B0C4DE");
     public static final int bayText = Color.argb(255, 150, 150, 150);
     public static final int barBgHrLine = Color.argb(255, 150, 150, 150);
     public static final int classBorder = Color.argb(180, 150, 150, 150);
     public static final int markerBorder = Color.argb(100, 150, 150, 150);
-
+    public static final int[] barBgs = {R.color.cadetblue, R.color.cornsilk, R.color.crimson, R.color.aquamarine
+            , R.color.honeydew, R.color.gray_cc};
     //预设格子背景颜色数组
     public static final int[] classBgColors = {Color.argb(200, 71, 154, 199),
             Color.argb(200, 230, 91, 62), Color.argb(200, 50, 178, 93),
@@ -185,7 +188,7 @@ public class ScheduleView extends View implements OnTouchListener {
      */
     private void printLeftBar(Canvas canvas) {
         // =================画左边课时栏=================
-        mPaint.setColor(barBg);
+        mPaint.setColor(barcBg);
         mPaint.setStyle(Style.FILL);
         mPaint.setTextSize(45);
         // 课时栏背景
