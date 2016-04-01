@@ -84,7 +84,8 @@ public class WelcomeActivity extends AppCompatActivity implements ViewPager.OnPa
     @Override
     public void onPageScrollStateChanged(int state) {
         int currentItem = viewpage.getCurrentItem();
-        if (currentItem == imageViews.size() - 1 && state == 0) {
+        if (currentItem == imageViews.size() - 1 &&
+                state == ViewPager.SCROLL_STATE_DRAGGING) {
             //跳转登陆界面
             startActivity(new Intent(this, LoginActivity.class));
             SharedPreferencesUtils.putString(this, "isFirst", "noFirst");
